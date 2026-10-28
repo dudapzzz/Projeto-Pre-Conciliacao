@@ -37,7 +37,7 @@ def test_movimentacao_valor_zero():
         )
     ])
 
-    resultado = preparar_conciliacao(titulos, extrato)
+    resultado, _ = preparar_conciliacao(titulos, extrato)
 
 
     assert resultado.loc[0, "possui_movimentacao"] == True
@@ -67,7 +67,7 @@ def test_movimentacoes_diferentes_nao_sao_duplicadas():
         )
     ])
 
-    resultado = preparar_conciliacao(titulos, extrato)
+    resultado, _ = preparar_conciliacao(titulos, extrato)
 
     assert resultado.loc[0, "quantidade_movimentacoes"] == 2
 
@@ -89,7 +89,7 @@ def test_valor_negativo_e_preservado():
         )
     ])
 
-    resultado = preparar_conciliacao(titulos, extrato)
+    resultado, _ = preparar_conciliacao(titulos, extrato)
 
     assert resultado.loc[0, "valor_conciliacao"] == 800.0
 
@@ -126,7 +126,7 @@ def test_documento_repetido_titulos():
         )
     ])
 
-    resultado = preparar_conciliacao(titulos, extrato)
+    resultado, _ = preparar_conciliacao(titulos, extrato)
 
     assert "documento_repetido" in resultado.columns
 
@@ -151,7 +151,7 @@ def test_documento_vazio_nao_concilia():
         )
     ])
 
-    resultado = preparar_conciliacao(titulos, extrato)
+    resultado, _ = preparar_conciliacao(titulos, extrato)
 
     assert resultado.loc[0, "possui_movimentacao"] == False
 
@@ -168,7 +168,7 @@ def test_documento_ausente_nao_concilia():
         )
     ])
 
-    resultado = preparar_conciliacao(titulos, extrato)
+    resultado, _ = preparar_conciliacao(titulos, extrato)
 
     assert resultado.loc[0, "possui_movimentacao"] == False
 
@@ -241,3 +241,40 @@ def test_situacao_data_extrato():
     assert resultado.loc[0, "situacao_data"] == "DATA_INVALIDA"
     assert resultado.loc[1, "situacao_data"] == "DATA_AUSENTE"
     assert resultado.loc[2, "situacao_data"] == "VALIDA"
+
+
+def test_datas_problematicas():
+    
+    extrato = pd.DataFrame({
+        "Data_Movimento": ["", "32/10/2026"],
+        "Numero_Documento": ["DOC-9001", "DOC-9002"],
+        "Descricao_Historico": ["PIX", "TED"],
+        "Valor_Movimento": [100.0, 200.0],
+        "Tipo": ["CREDITO", "CREDITO"]
+    })
+
+    extrato_tratado = limpar_extrato(extrato)
+
+    assert extrato_tratado["situacao_data"].tolist() == [
+        "DATA_AUSENTE",
+        "DATA_INVALIDA"
+    ]
+
+
+def test_data_problematica_nao_concilia():
+    titulos = pd.DataFrame({
+        "data_vencimento": [pd.Timestamp("2026-10-10")]
+        "numero_documento": ["DOC-9003"],
+        "cliente_fornecedor": ["Cliente A"],
+        "valor_esperado": [100.0],
+        "status_sistema" : ["ABERTO"]
+    })
+
+    extrato = pd.DataFrame({
+        "data_movimento": [
+            pd.Timestamp("2026-10-10"),
+            pd.NaT
+        ],
+        "numero_documento": ["DOC-9003", "DOC-9003"],
+        
+

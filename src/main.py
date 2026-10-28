@@ -21,7 +21,24 @@ titulos_tratados = limpar_titulos(titulos_sem_tratamento)
 
 extrato_tratado = limpar_extrato(extrato_sem_tratamento)
 
-resultado = preparar_conciliacao(
+
+#so p testar:
+# Confere como as datas do extrato foram classificadas.
+print("\nConferência das situações das datas:")
+
+print(
+    extrato_tratado[
+        ["data_movimento", "numero_documento", "situacao_data"]
+    ].to_string(index=False)
+)
+
+# Conta quantas movimentações existem em cada situação.
+print("\nQuantidade por situação:")
+
+print(extrato_tratado["situacao_data"].value_counts(dropna=False))
+
+
+resultado, movimentacoes_data_problematica = preparar_conciliacao(
     titulos_tratados,
     extrato_tratado
 )
@@ -105,3 +122,18 @@ print(movimentacoes_sem_titulo_result[
 
 print("/n Tabela principal:")
 print(tabela_principal.to_string(index=False))
+
+print("\n Movimentações com data ausente ou inválida - revisão manual!!:")
+
+print(
+    movimentacoes_data_problematica[
+        [
+            "data_movimento",
+            "numero_documento",
+            "descricao_historico",
+            "valor_movimento",
+            "tipo",
+            "situacao_data"
+        ]
+    ].to_string(index=False)
+)

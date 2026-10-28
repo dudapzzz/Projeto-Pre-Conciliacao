@@ -9,6 +9,25 @@ def preparar_conciliacao(
 ) -> pd.DataFrame:
     extrato_copia = extrato.copy()
 
+    if "situacao_data" in extrato_copia.columns:
+        data_problematica = extrato_copia["situacao_data"].isin([
+            "DATA_AUSENTE",
+            "DATA_INVALIDA"
+        ])
+    else:
+        data_problematica = pd.Series(
+            False,
+            index=extrato_copia.index
+        )
+    
+    movimentacoes_data_problematica= extrato_copia[
+        data_problematica
+    ].copy()
+
+    extrato_copia = extrato_copia[
+        ~data_problematica
+    ].copy()
+
     contagem_documentos = titulos["numero_documento"].value_counts()
 
     documentos_repetidos = contagem_documentos[
@@ -116,7 +135,7 @@ def preparar_conciliacao(
         conciliacao["primeira_data_movimentacao"] - conciliacao["data_vencimento"]
     ).dt.days # converte a diferença de datas em dias
 
-    return conciliacao
+    return conciliacao, movimentacoes_data_problematica
 
 def movimentacoes_sem_titulo(
     titulos: pd.DataFrame,
